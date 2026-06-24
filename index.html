@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>mobile · envelope → flip</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      background: radial-gradient(circle at 30% 20%, #f8d5e0, #f0b8c8);
+      font-family: 'Poppins', 'Segoe UI', system-ui, sans-serif;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 12px;
+      margin: 0;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      padding: 8px 0;
+    }
+
+    /* ——— ENVELOPE (mobile-first, smooth) ——— */
+    .envelope-wrapper {
+      width: 100%;
+      max-width: 400px;
+      aspect-ratio: 3 / 2;
+      perspective: 1200px;
+      cursor: pointer;
+      transition: transform 0.4s ease, opacity 0.7s ease, max-height 0.7s ease, margin 0.7s ease, padding 0.7s ease;
+      margin: 0 auto;
+      flex-shrink: 0;
+      overflow: visible;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .envelope-wrapper:active {
+      transform: scale(0.96);
+      transition: transform 0.1s;
+    }
+
+    .envelope {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .envelope-body {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(160deg, #ff7b9c, #f04a6e);
+      position: absolute;
+      bottom: 0;
+      box-shadow: 
+        inset 0 -8px 0 rgba(0,0,0,0.06),
+        0 20px 48px rgba(180, 50, 80, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-top: none;
+      overflow: hidden;
+      border-radius: 0;
+    }
+
+    .envelope-body::before {
+      content: '';
+      position: absolute;
+      top: 24px;
+      left: 40px;
+      right: 40px;
+      height: 2px;
+      background: repeating-linear-gradient(90deg, 
+        rgba(255, 255, 255, 0.15) 0px, 
+        rgba(255, 255, 255, 0.15) 10px, 
+        transparent 10px, 
+        transparent 20px);
+      opacity: 0.5;
+    }
+
+    .flap {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 0;
+      height: 0;
+      transform-origin: top;
+      transition: transform 1.2s cubic-bezier(0.19, 1, 0.22, 1);
+      z-index: 5;
+      filter: drop-shadow(0 -2px 6px rgba(0,0,0,0.04));
+    }
+
+    .envelope .flap {
+      border-left: 200px solid transparent;
+      border-right: 200px solid transparent;
+      border-top: 133px solid #f04a6e;
+    }
+
+    .flap::after {
+      content: '';
+      position: absolute;
+      top: -133px;
+      left: -200px;
+      width: 400px;
+      height: 133px;
+      background: linear-gradient(180deg, rgba(255,220,220,0.15) 0%, transparent 90%);
+      pointer-events: none;
+    }
+
+    .open .flap {
+      transform: rotateX(180deg);
+      border-top-color: #d93e5e;
+    }
+
+    .message {
+      position: absolute;
+      top: 30px;
+      left: 30px;
+      right: 30px;
+      height: 60%;
+      background: rgba(255, 248, 248, 0.92);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #9e2a44;
+      font-weight: 500;
+      font-size: 1.4rem;
+      letter-spacing: 4px;
+      transition: all 1.2s cubic-bezier(0.23, 1, 0.32, 1);
+      z-index: 2;
+      box-shadow: 
+        inset 0 2px 20px rgba(255, 100, 130, 0.08),
+        0 12px 32px rgba(160, 40, 70, 0.10);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      text-transform: uppercase;
+      text-align: center;
+      padding: 0 16px;
+    }
+
+    .message span {
+      background: linear-gradient(135deg, #b32a4a, #d94a6a);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 600;
+      letter-spacing: 5px;
+    }
+
+    .open .message {
+      transform: translateY(-80%) scale(0.9);
+      opacity: 0;
+      transition: 1.2s cubic-bezier(0.19, 1, 0.22, 1);
+    }
+
+    .seal {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 6;
+      width: 44px;
+      height: 44px;
+      background: radial-gradient(circle at 30% 30%, #ffb3c6, #e87a9a);
+      border-radius: 50%;
+      box-shadow: 0 4px 16px rgba(200, 50, 80, 0.25), inset 0 2px 4px rgba(255,255,255,0.3);
+      transition: all 0.7s cubic-bezier(0.23, 1, 0.32, 1);
+      pointer-events: none;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .open .seal {
+      opacity: 0;
+      transform: translateX(-50%) scale(0.2) rotate(160deg);
+      transition: 0.6s;
+    }
+
+    .envelope-wrapper.hidden {
+      opacity: 0;
+      transform: scale(0.8) translateY(30px);
+      pointer-events: none;
+      transition: 0.7s cubic-bezier(0.19, 1, 0.22, 1);
+      max-height: 0;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      aspect-ratio: unset;
+      width: 0;
+    }
+
+    /* ——— FLIP CARD ——— */
+    .flip-container {
+      width: 100%;
+      max-width: 400px;
+      aspect-ratio: 3 / 4;
+      perspective: 1400px;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+      display: none;
+      margin-top: 0;
+      flex-shrink: 0;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .flip-container.visible {
+      display: block;
+      animation: fadeUp 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .flip-container:active {
+      transform: scale(0.97);
+      transition: transform 0.08s;
+    }
+
+    .flipper {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transition: transform 1.2s cubic-bezier(0.23, 1, 0.32, 1);
+      transform-style: preserve-3d;
+      box-shadow: 0 30px 60px rgba(140, 40, 70, 0.20);
+    }
+
+    .flip-container.flipped .flipper {
+      transform: rotateY(180deg);
+    }
+
+    .front, .back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      overflow: hidden;
+      background: white;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0;
+    }
+
+    .front img, .back img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      -webkit-user-drag: none;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    .back {
+      transform: rotateY(180deg);
+      background: #fce8ee;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    @keyframes fadeUp {
+      0% { opacity: 0; transform: scale(0.92) translateY(30px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    /* ——— RESPONSIVE (mobile-first) ——— */
+    @media (max-width: 460px) {
+      .envelope .flap {
+        border-left: 165px solid transparent;
+        border-right: 165px solid transparent;
+        border-top: 110px solid #f04a6e;
+      }
+      .flap::after {
+        top: -110px;
+        left: -165px;
+        width: 330px;
+        height: 110px;
+      }
+      .message { font-size: 1.1rem; top: 24px; left: 24px; right: 24px; }
+      .seal { width: 36px; height: 36px; top: 16px; }
+      .flip-container { max-width: 360px; }
+    }
+
+    @media (max-width: 380px) {
+      .envelope .flap {
+        border-left: 140px solid transparent;
+        border-right: 140px solid transparent;
+        border-top: 93px solid #f04a6e;
+      }
+      .flap::after {
+        top: -93px;
+        left: -140px;
+        width: 280px;
+        height: 93px;
+      }
+      .message { font-size: 0.9rem; top: 20px; left: 20px; right: 20px; }
+      .seal { width: 30px; height: 30px; top: 14px; }
+      .flip-container { max-width: 300px; }
+    }
+
+    @media (max-height: 700px) {
+      .container { padding: 4px 0; }
+      .envelope-wrapper { max-width: 340px; }
+      .flip-container { max-width: 340px; }
+    }
+
+    @media (max-width: 340px) {
+      .envelope .flap {
+        border-left: 120px solid transparent;
+        border-right: 120px solid transparent;
+        border-top: 80px solid #f04a6e;
+      }
+      .flap::after {
+        top: -80px;
+        left: -120px;
+        width: 240px;
+        height: 80px;
+      }
+      .message { font-size: 0.75rem; top: 16px; left: 16px; right: 16px; }
+      .seal { width: 24px; height: 24px; top: 12px; }
+    }
+
+    @media (max-height: 600px) {
+      .envelope-wrapper { max-width: 280px; }
+      .flip-container { max-width: 280px; }
+      .message { font-size: 0.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- ENVELOPE (mobile tap) -->
+  <div class="envelope-wrapper" id="envelopeWrapper">
+    <div class="envelope" id="envelope">
+      <div class="flap"></div>
+      <div class="envelope-body"></div>
+      <div class="message"><span>✨</span> <span style="font-weight:300; letter-spacing:6px; margin:0 4px;">·</span> <span>✨</span></div>
+      <div class="seal"></div>
+    </div>
+  </div>
+
+  <!-- FLIP CARD (full images) -->
+  <div class="flip-container" id="flipCard">
+    <div class="flipper">
+      <div class="front">
+        <img src="1.jpg" alt="front" draggable="false">
+      </div>
+      <div class="back">
+        <img src="2.jpg" alt="back" draggable="false">
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const envelopeWrapper = document.getElementById('envelopeWrapper');
+    const envelope = document.getElementById('envelope');
+    const flipCard = document.getElementById('flipCard');
+
+    // 1. ENVELOPE → open, hide, show flip card (mobile friendly)
+    envelopeWrapper.addEventListener('click', function(e) {
+      e.preventDefault();
+      // add a subtle haptic-like feedback (vibrate if supported)
+      if (navigator.vibrate) navigator.vibrate(8);
+      
+      envelope.classList.add('open');
+
+      setTimeout(() => {
+        envelopeWrapper.classList.add('hidden');
+        flipCard.classList.add('visible');
+        // keep scroll locked
+        document.body.style.overflow = 'hidden';
+        document.documentElement.style.overflow = 'hidden';
+      }, 1400);
+    });
+
+    // 2. FLIP CARD → toggle flip on tap (mobile)
+    flipCard.addEventListener('click', function(e) {
+      e.preventDefault();
+      if (navigator.vibrate) navigator.vibrate(5);
+      this.classList.toggle('flipped');
+    });
+
+    // lock scroll everywhere
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+
+    // prevent context menu / long press on images
+    document.querySelectorAll('img').forEach(img => {
+      img.addEventListener('contextmenu', (e) => e.preventDefault());
+    });
+
+    // prevent ghost clicks / double taps
+    let lastTap = 0;
+    document.addEventListener('touchend', function(e) {
+      const now = Date.now();
+      if (now - lastTap < 300) e.preventDefault();
+      lastTap = now;
+    }, { passive: false });
+
+  })();
+</script>
+
+</body>
+</html>
